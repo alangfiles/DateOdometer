@@ -62,7 +62,7 @@
   <input type="date" id="date" required>
   <br>
   <label for="time">Time:</label>
-  <input type="time" id="time" required>
+  <input type="time" id="time"> -- will use 00:00 if not specified
   <br>
   <button onclick="saveDate()">Save Date</button>
 
@@ -103,7 +103,7 @@
       const timeInput = document.getElementById('time').value;
 
 
-      if (name && dateInput && timeInput) {
+      if (name && dateInput) {
         const savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
 
         if (savedDates.find(entry => entry.name === name)) {
