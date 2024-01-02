@@ -1,104 +1,175 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Date Tracker</title>
+  <title>A Very Merry Un-Birthday</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       padding: 20px;
     }
+
     h2 {
       color: #333;
     }
-    input, button {
+
+    input,
+    button {
       margin-bottom: 10px;
     }
+
     ul {
       list-style-type: none;
       padding: 0;
     }
-    li {
-      margin-bottom: 10px;
+
+    .date-cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .date-card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      background-color: white;
+    }
+
+    .remove-btn {
+      cursor: pointer;
+      color: #ff0000;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    body {
+      background-color: #f1f1f1;
     }
   </style>
 </head>
+
 <body>
-  <h2>Date Tracker</h2>
+  <h2>A Very Merry Un-Birthday</h2>
   <label for="name">Name:</label>
   <input type="text" id="name" placeholder="Enter name" required>
   <br>
   <label for="date">Date:</label>
   <input type="date" id="date" required>
   <br>
+  <label for="time">Time:</label>
+  <input type="time" id="time" required>
+  <br>
   <button onclick="saveDate()">Save Date</button>
 
-  <h2>Entered Dates:</h2>
-  <ul id="dateList"></ul>
+  <ul id="dateList" class="date-cards-container"></ul>
 
   <script>
+    function generateDateCardHTML(name, date) {
+      const currentDate = new Date();
+      const enteredDate = new Date(date);
+      const timeDifference = currentDate - enteredDate;
+
+      const seconds = Math.floor(timeDifference / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+      const months = Math.floor(days / 30.44); //avg days in a month
+      const weeks = Math.floor(days / 7);
+      const years = Math.floor(days / 365);
+      const leapYears = Math.floor((years + 2) / 4); // Account for leap years
+
+      return `<div class="date-card" data-date="${date}">
+                <div class="date-info"><b>${name} ${date}</b></p>
+                <div class="time-info">${seconds.toLocaleString()} seconds</div>
+                <div class="time-info">${minutes.toLocaleString()} minutes</div>
+                <div class="time-info">${hours.toLocaleString()} hours</div>
+                <div class="time-info">${days.toLocaleString()} days</div>
+                <div class="time-info">${months.toLocaleString()} months</div>
+                <div class="time-info">${weeks.toLocaleString()} weeks</div>
+                <div class="time-info">${years.toLocaleString()} years</div>
+                <div class="time-info">${leapYears.toLocaleString()} leap years</div>
+                <span class="remove-btn" onclick="removeEntry(this)">Remove</span>
+              </div>`;
+    }
+
     function saveDate() {
       const name = document.getElementById('name').value;
       const dateInput = document.getElementById('date').value;
+      const timeInput = document.getElementById('time').value;
 
-      if (name && dateInput) {
-        const currentDate = new Date();
-        const enteredDate = new Date(dateInput);
-        const timeDifference = currentDate - enteredDate;
 
-        const seconds = Math.floor(timeDifference / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
-        const years = Math.floor(days / 365);
+      if (name && dateInput && timeInput) {
+        const savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
 
-        const dateString = `${name} - ${dateInput}<br/>`;
-        const timeString = `${seconds.toLocaleString()} seconds<br/> ${minutes.toLocaleString()} minutes<br/> ${hours.toLocaleString()} hours<br/> ${days.toLocaleString()} days<br/> ${years.toLocaleString()} years<br/>`;
+        if (savedDates.find(entry => entry.name === name)) {
+          alert('You already have a saved date for this name.');
+          return;
+        }
+
+
+        const dateCardHTML = generateDateCardHTML(name, dateInput);
 
         const listItem = document.createElement('li');
-        listItem.textContent = `${dateString} ${timeString}<br/>`;
+        listItem.innerHTML = dateCardHTML;
 
         document.getElementById('dateList').appendChild(listItem);
 
         // Save to local storage
-        const savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
-        savedDates.push({ name, date: dateInput });
+        savedDates.push({ name, date: dateInput, time: timeInput });
         localStorage.setItem('savedDates', JSON.stringify(savedDates));
 
         // Clear input fields
         document.getElementById('name').value = '';
         document.getElementById('date').value = '';
+        document.getElementById('time').value = '';
       } else {
         alert('Please enter both name and date.');
       }
     }
 
-    // Load saved dates from local storage on page load
-    document.addEventListener('DOMContentLoaded', function() {
+    function removeEntry(element) {
+      const listItem = element.closest('li');
+      const dateInfo = listItem.textContent.split('-');
+      const name = dateInfo[0].trim();
+      const date = dateInfo[1].trim().split(' ')[0].trim();
+
+      // Remove from the list
+      listItem.remove();
+
+      // Remove from local storage
       const savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
+      const updatedDates = savedDates.filter(entry => !(entry.name === name));
+      localStorage.setItem('savedDates', JSON.stringify(updatedDates));
+    }
 
-      savedDates.forEach(entry => {
-        const dateInput = new Date(entry.date);
-        const currentDate = new Date();
-        const timeDifference = currentDate - dateInput;
+    // Load saved dates from local storage on page load
+    document.addEventListener('DOMContentLoaded', function () {
 
-        const seconds = Math.floor(timeDifference / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
-        const years = Math.floor(days / 365);
 
-        const dateString = `${entry.name} - ${entry.date}`;
-        const timeString = `(${seconds} seconds, ${minutes} minutes, ${hours} hours, ${days} days, ${years} years ago)`;
+      setInterval(() => {
 
-        const listItem = document.createElement('li');
-        listItem.textContent = `${dateString} ${timeString}`;
+        document.getElementById('dateList').innerHTML = '';
 
-        document.getElementById('dateList').appendChild(listItem);
-      });
+        const savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
+
+        savedDates.forEach((entry) => {
+          const dateCardHTML = generateDateCardHTML(entry.name, entry.date);
+
+          const listItem = document.createElement('li');
+          listItem.innerHTML = dateCardHTML;
+
+          document.getElementById('dateList').appendChild(listItem);
+        });
+      }, 1000);
+
+
     });
   </script>
 </body>
-</html>
 
+</html>
