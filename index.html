@@ -53,11 +53,11 @@
         const days = Math.floor(hours / 24);
         const years = Math.floor(days / 365);
 
-        const dateString = `${name} - ${dateInput}`;
-        const timeString = `(${seconds} seconds, ${minutes} minutes, ${hours} hours, ${days} days, ${years} years ago)`;
+        const dateString = `${name} - ${dateInput}<br/>`;
+        const timeString = `${seconds.toLocaleString()} seconds<br/> ${minutes.toLocaleString()} minutes<br/> ${hours.toLocaleString()} hours<br/> ${days.toLocaleString()} days<br/> ${years.toLocaleString()} years<br/>`;
 
         const listItem = document.createElement('li');
-        listItem.textContent = `${dateString} ${timeString}`;
+        listItem.textContent = `${dateString} ${timeString}<br/>`;
 
         document.getElementById('dateList').appendChild(listItem);
 
