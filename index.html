@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Date Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h2 {
+      color: #333;
+    }
+    input, button {
+      margin-bottom: 10px;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Date Tracker</h2>
+  <label for="name">Name:</label>
+  <input type="text" id="name" placeholder="Enter name" required>
+  <br>
+  <label for="date">Date:</label>
+  <input type="date" id="date" required>
+  <br>
+  <button onclick="saveDate()">Save Date</button>
+
+  <h2>Entered Dates:</h2>
+  <ul id="dateList"></ul>
+
+  <script>
+    function saveDate() {
+      const name = document.getElementById('name').value;
+      const dateInput = document.getElementById('date').value;
+
+      if (name && dateInput) {
+        const currentDate = new Date();
+        const enteredDate = new Date(dateInput);
+        const timeDifference = currentDate - enteredDate;
+
+        const seconds = Math.floor(timeDifference / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const years = Math.floor(days / 365);
+
+        const dateString = `${name} - ${dateInput}`;
+        const timeString = `(${seconds} seconds, ${minutes} minutes, ${hours} hours, ${days} days, ${years} years ago)`;
+
+        const listItem = document.createElement('li');
+        listItem.textContent = `${dateString} ${timeString}`;
+
+        document.getElementById('dateList').appendChild(listItem);
+
+        // Save to local storage
+        const savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
+        savedDates.push({ name, date: dateInput });
+        localStorage.setItem('savedDates', JSON.stringify(savedDates));
+
+        // Clear input fields
+        document.getElementById('name').value = '';
+        document.getElementById('date').value = '';
+      } else {
+        alert('Please enter both name and date.');
+      }
+    }
+
+    // Load saved dates from local storage on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      const savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
+
+      savedDates.forEach(entry => {
+        const dateInput = new Date(entry.date);
+        const currentDate = new Date();
+        const timeDifference = currentDate - dateInput;
+
+        const seconds = Math.floor(timeDifference / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const years = Math.floor(days / 365);
+
+        const dateString = `${entry.name} - ${entry.date}`;
+        const timeString = `(${seconds} seconds, ${minutes} minutes, ${hours} hours, ${days} days, ${years} years ago)`;
+
+        const listItem = document.createElement('li');
+        listItem.textContent = `${dateString} ${timeString}`;
+
+        document.getElementById('dateList').appendChild(listItem);
+      });
+    });
+  </script>
+</body>
+</html>
+
