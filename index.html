@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A Very Merry Un-Birthday</title>
+  <title>Date Odometer</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -41,10 +41,10 @@
     }
 
     .remove-btn {
+      float: right;
       cursor: pointer;
-      color: #ff0000;
+      color: #888;
       font-weight: bold;
-      margin-top: 10px;
     }
 
     body {
@@ -54,46 +54,134 @@
 </head>
 
 <body>
-  <h2>A Very Merry Un-Birthday</h2>
-  <label for="name">Name:</label>
-  <input type="text" id="name" placeholder="Enter name" required>
-  <br>
-  <label for="date">Date:</label>
-  <input type="date" id="date" required>
-  <br>
-  <label for="time">Time:</label>
-  <input type="time" id="time"> -- will use 00:00 if not specified
+  <h2>Date Odometer</h2>
+  <p>Enter names and dates and see if any interesting time milestones are coming up. Are you almost 1 billion seconds
+    old?!</p>
+  <form onsubmit="saveDate(); return false;">
+    <label for="name">Name:</label>
+    <input type="text" id="name" placeholder="Enter name" required>
+    <br>
+    <label for="date">Date:</label>
+    <input type="date" id="date" required>
+    <br>
+    <label for="time">Time:</label>
+    <input type="time" id="time"> -- will use 00:00 if not specified
+  </form>
   <br>
   <button onclick="saveDate()">Save Date</button>
 
   <ul id="dateList" class="date-cards-container"></ul>
 
   <script>
-    function generateDateCardHTML(name, date) {
+
+    function generatePastel(name) {
+      const randomNumberFromName = name.split('').reduce((a, b) => a + (b.charCodeAt(0) % 127) / 127, 0);
+      var hue = Math.round(randomNumberFromName * 360);
+      return 'hsl(' + hue + ', 100%, 87%)';
+    }
+
+    function monthsSinceDate(date) {
       const currentDate = new Date();
       const enteredDate = new Date(date);
-      const timeDifference = currentDate - enteredDate;
 
+
+
+      const currentMonth = currentDate.getMonth();
+      const enteredMonth = enteredDate.getMonth();
+
+      const currentYear = currentDate.getFullYear();
+      const enteredYear = enteredDate.getFullYear();
+
+
+      return (currentYear - enteredYear) * 12 + (currentMonth - enteredMonth - 1);
+    }
+
+    function countWeeks(startDate) {
+      const currentDate = new Date();
+      const start = new Date(startDate);
+      let count = 0;
+
+      let dayToCount = start.getDay();
+      start.setDate(start.getDate() + 1);
+
+      while (start <= currentDate) {
+        if (start.getDay() === dayToCount) {
+          count++;
+        }
+        start.setDate(start.getDate() + 1);
+      }
+
+      return count;
+    }
+
+    function yearsSinceDate(date) {
+      const currentDate = new Date();
+      const enteredDate = new Date(date);
+
+      const currentYear = currentDate.getFullYear();
+      const enteredYear = enteredDate.getFullYear();
+      return currentYear - enteredYear - 1;
+    }
+
+    function leapYearsSinceDate(date) {
+
+      const isLeap = (year) => new Date(year, 1, 29).getMonth() == 1
+
+      const currentDate = new Date();
+      const enteredDate = new Date(date);
+
+      const currentYear = currentDate.getFullYear();
+      const enteredYear = enteredDate.getFullYear();
+
+
+      let offset = 0;
+
+      if (enteredDate.getMonth() > 1 && isLeap(enteredDate.getFullYear())) { //entered date starts on march of a leap year
+        ++offset;
+      }
+      if (currentDate.getMonth() < 1) { //leap day hasn't happend yet
+        ++offset;
+      }
+
+      let numLeapYears = 0;
+      for (let i = enteredYear; i <= currentYear; i++) {
+        if (isLeap(i)) {
+          numLeapYears++;
+        }
+      }
+      return numLeapYears - offset;
+    }
+
+    function generateDateCardHTML(entry) {
+      const { name, date, time } = entry;
+      const currentDate = new Date();
+      const enteredDate = new Date(`${date} ${time || '00:00'}`);
+      const timeDifference = currentDate - enteredDate;
       const seconds = Math.floor(timeDifference / 1000);
       const minutes = Math.floor(seconds / 60);
       const hours = Math.floor(minutes / 60);
       const days = Math.floor(hours / 24);
-      const months = Math.floor(days / 30.44); //avg days in a month
-      const weeks = Math.floor(days / 7);
-      const years = Math.floor(days / 365);
-      const leapYears = Math.floor((years + 2) / 4); // Account for leap years
+      const months = monthsSinceDate(date);
+      // const weeks = Math.floor(days / 7); //weeksSinceDate(date);
+      const weeksByBirthday = countWeeks(date);
+      const years = yearsSinceDate(date);
+      const leapYears = leapYearsSinceDate(date);
 
-      return `<div class="date-card" data-date="${date}">
-                <div class="date-info"><b>${name} ${date}</b></p>
-                <div class="time-info">${seconds.toLocaleString()} seconds</div>
-                <div class="time-info">${minutes.toLocaleString()} minutes</div>
-                <div class="time-info">${hours.toLocaleString()} hours</div>
-                <div class="time-info">${days.toLocaleString()} days</div>
-                <div class="time-info">${months.toLocaleString()} months</div>
-                <div class="time-info">${weeks.toLocaleString()} weeks</div>
-                <div class="time-info">${years.toLocaleString()} years</div>
-                <div class="time-info">${leapYears.toLocaleString()} leap years</div>
-                <span class="remove-btn" onclick="removeEntry(this)">Remove</span>
+      const plural = (num) => num === 1 ? '' : 's';
+
+
+      return `<div class="date-card" data-date="${date}" data-name="${name}" style="background-color: ${generatePastel(name)};">
+                <div><span class="remove-btn" onclick="removeEntry('${name}')">X</span></div>
+                <div class="date-info"><b>${name} <br/>${enteredDate.toUTCString()}</b></p>
+                <div class="time-info">${seconds.toLocaleString()} second${plural(seconds)}</div>
+                <div class="time-info">${minutes.toLocaleString()} minute${plural(minutes)}</div>
+                <div class="time-info">${hours.toLocaleString()} hour${plural(hours)}</div>
+                <div class="time-info">${days.toLocaleString()} day${plural(days)}</div>
+                <div class="time-info">${months.toLocaleString()} month${plural(months)}</div>
+                <div class="time-info">${weeksByBirthday.toLocaleString()} week${plural(weeksByBirthday)}</div>
+                <div class="time-info">${years.toLocaleString()} year${plural(years)}</div>
+                <div class="time-info">${leapYears.toLocaleString()} leap day${plural(leapYears)}</div>
+                
               </div>`;
     }
 
@@ -111,40 +199,44 @@
           return;
         }
 
-
-        const dateCardHTML = generateDateCardHTML(name, dateInput);
-
-        const listItem = document.createElement('li');
-        listItem.innerHTML = dateCardHTML;
-
-        document.getElementById('dateList').appendChild(listItem);
-
         // Save to local storage
-        savedDates.push({ name, date: dateInput, time: timeInput });
+        const entry = { name, date: dateInput, time: timeInput };
+        savedDates.push(entry);
         localStorage.setItem('savedDates', JSON.stringify(savedDates));
 
         // Clear input fields
         document.getElementById('name').value = '';
         document.getElementById('date').value = '';
         document.getElementById('time').value = '';
+
+        const dateCardHTML = generateDateCardHTML(entry);
+
+        const listItem = document.createElement('li');
+        listItem.innerHTML = dateCardHTML;
+
+        document.getElementById('dateList').appendChild(listItem);
       } else {
         alert('Please enter both name and date.');
       }
     }
 
-    function removeEntry(element) {
-      const listItem = element.closest('li');
-      const dateInfo = listItem.textContent.split('-');
-      const name = dateInfo[0].trim();
-      const date = dateInfo[1].trim().split(' ')[0].trim();
+    function removeEntry(name) {
+      let result = window.confirm(`Are you sure you want to delete ${name}?`);
 
-      // Remove from the list
-      listItem.remove();
-
+      if (!result) {
+        return;
+      }
       // Remove from local storage
       const savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
       const updatedDates = savedDates.filter(entry => !(entry.name === name));
       localStorage.setItem('savedDates', JSON.stringify(updatedDates));
+
+      // Remove from DOM
+      document.querySelectorAll('.date-card').forEach(card => {
+        if (card.dataset.name === name) {
+          card.remove();
+        }
+      });
     }
 
     // Load saved dates from local storage on page load
@@ -158,7 +250,7 @@
         const savedDates = JSON.parse(localStorage.getItem('savedDates')) || [];
 
         savedDates.forEach((entry) => {
-          const dateCardHTML = generateDateCardHTML(entry.name, entry.date);
+          const dateCardHTML = generateDateCardHTML(entry);
 
           const listItem = document.createElement('li');
           listItem.innerHTML = dateCardHTML;
